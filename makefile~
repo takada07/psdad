@@ -26,7 +26,7 @@ LFLAGS = lib
 LIBS = -lpcap
 
 # define the C source files
-SRCS = src/config.c src/err.c src/strutil.c src/sniffer.c src/ini.c src/wake.c src/ping.c src/server.c main.c
+SRCS = src/config.c src/err.c src/strutil.c src/sniffer.c src/ini.c src/wake.c src/ping.c src/server.h main.c
 
 # define the C object files 
 #
