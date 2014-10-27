@@ -9,7 +9,10 @@ Part of psdad project distributed under MIT Licence (see LICENSE.txt)
 #ifndef __SNIFFER_H__
 #define __SNIFFER_H__
 
+#include "config.h"
+
 int init_sniffer(char *conf_dev);
 int start_loop();
+void inject_packet(struct cfgData *data);
 
 #endif

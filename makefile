@@ -1,6 +1,4 @@
 #
-# 'make depend' uses makedepend to automatically generate dependencies 
-#               (dependencies are added to end of Makefile)
 # 'make'        build executable file 'mycc'
 # 'make clean'  removes all .o and executable files
 #
@@ -40,6 +38,7 @@ OBJS = $(SRCS:.c=.o)
 
 # define the executable file 
 MAIN = psdad
+CLIENT = sendpacket
 CFLAGS = -Wall
 #
 # The following part of the makefile is generic; it can be used to 
@@ -67,7 +66,7 @@ build:    $(MAIN)
 
 $(MAIN): $(OBJS) 
 		$(CC) $(CFLAGS) $(INCLUDES) -o $(MAIN) $(OBJS) $(LIBS) 
-
+		$(CC) $(CFLAGS) $(INCLUDES) -o $(CLIENT) $(CLIENT).c
 # this is a suffix replacement rule for building .o's from .c's
 # it uses automatic variables $<: the name of the prerequisite of
 # the rule(a .c file) and $@: the name of the target of the rule (a .o file) 

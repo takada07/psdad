@@ -1,6 +1,10 @@
 *.a
 *.o
 *.swp
+*.swo
+*.swn
 *.c~
 *.h~
+*~
 psdad
+sendpacket

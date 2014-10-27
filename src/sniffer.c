@@ -91,13 +91,21 @@ void forward_packet(int size_ip, struct cfgData *configdata, int packet_length, 
     debug_printf("%02x:%02x:%02x:%02x:%02x:%02x\n", configdata->ether[0], configdata->ether[1], configdata->ether[2], configdata->ether[3], configdata->ether[4], configdata->ether[5]);
     memcpy(ethernet->ether_dhost,configdata->ether,ETHER_ADDR_LEN);
     send_wol(configdata,dev);
-    sleep(5);
+    configdata->forwardpacket=forwardpacket;
+    configdata->fwpacketlen=packet_length;
     ifdown(dev,configdata);
-    sleep(30);
-    /*First send WOL*/
-    if (pcap_inject(handle,forwardpacket,packet_length)==-1) 
+}
+
+void inject_packet(struct cfgData *data)
+{
+    if(data->forwardpacket != NULL)
     {
-        pcap_perror(handle,0);
+        if (pcap_inject(handle,data->forwardpacket,data->fwpacketlen)==-1) 
+        {
+            pcap_perror(handle,0);
+        }
+        data->fwpacketlen=0;
+        free(data->forwardpacket);
     }
 }
 
