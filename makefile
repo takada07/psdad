@@ -21,10 +21,10 @@ LFLAGS = lib
 # define any libraries to link into executable:
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname 
 #   option, something like (this will link in libmylib.so and libm.so:
-LIBS = -lpcap
+LIBS = -lpcap -lpthread
 
 # define the C source files
-SRCS = src/config.c src/err.c src/strutil.c src/sniffer.c src/ini.c src/wake.c src/ping.c src/server.c main.c
+SRCS = src/config.c src/err.c src/strutil.c src/sniffer.c src/ini.c src/wake.c src/ping.c src/pingserver.c main.c
 
 # define the C object files 
 #

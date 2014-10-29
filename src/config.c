@@ -11,6 +11,7 @@ Part of psdad project distributed under MIT Licence (see LICENSE.txt)
 #include <string.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "defines.h"
 #include "config.h"
@@ -19,14 +20,21 @@ Part of psdad project distributed under MIT Licence (see LICENSE.txt)
 #include "ini.h"
 #include "ping.h"
 
-struct hostData
-{
-    struct cfgData data;
-    struct hostData *next;
-};
 
 struct hostData *hostBuffer;
 struct hostData *hostBufferLast;
+
+size_t get_configsize()
+{
+    size_t retval=0;
+    struct hostData *tmp = hostBuffer; 
+    while(tmp != NULL)
+    {
+        retval++;
+        tmp = tmp->next;
+    }
+    return retval;
+}
 
 struct cfgData *set_section(const char *section)
 {
@@ -42,6 +50,8 @@ struct cfgData *set_section(const char *section)
     strcpy(tmp->data.section,section);
     tmp->data.forwardpacket=NULL;
     tmp->data.fwpacketlen=0;
+    tmp->data.status=tUnknown;
+    pthread_mutex_init(&tmp->data.accessmutex,NULL);
     tmp->next=NULL;
     if (hostBuffer==NULL)
     {
@@ -174,9 +184,10 @@ int read_config(char *cfgName)
 
 int set_ifaces(const char *dev)
 {
-    struct hostData *tmp = hostBuffer;
+/*    struct hostData *tmp = hostBuffer;
     while (tmp != NULL)
     {
+        debug_printf("pinging...\n");
         if (ping(&tmp->data.ip) != 0)
         {
             //set interface, host is not responding
@@ -185,14 +196,15 @@ int set_ifaces(const char *dev)
                 inet_ntop(AF_INET,(void *)&tmp->data.ip, strip, INET_ADDRSTRLEN);
                 debug_printf("IP=%s not responding\n",strip);
             #endif
+            tmp->data.status=tDown;
             ifup(dev, &tmp->data);
         }
         else
         {
-            tmp->data.status=0;
+            tmp->data.status=tUp;
         }
         tmp=tmp->next;
-    }
+    }*/
     return (ERR_OK);
 }
 
@@ -218,7 +230,7 @@ int ifdown(const char *dev, struct cfgData *data)
 {
     char cmd[100];
     sprintf(cmd,"scripts/stopiface.sh %s %d",dev,data->id);
-    data->status=0;
+    debug_printf("running %s\n",cmd);    
     return (system(cmd));
 }
 
@@ -228,7 +240,7 @@ int ifup(const char *dev, struct cfgData *data)
     char strip[20];
     inet_ntop(AF_INET,(void *)&data->ip, strip, INET_ADDRSTRLEN);
     sprintf(cmd,"scripts/startiface.sh eth0 %d %s",data->id,strip);
-    data->status=1;
+    debug_printf("running %s\n",cmd);
     return (system(cmd));
 }
 

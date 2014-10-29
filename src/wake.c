@@ -64,9 +64,6 @@ int send_wol(const struct cfgData *data, char *ifname)
     /* Fill in the source address, if possible.
        The code to retrieve the local station address is Linux specific. */
     struct ifreq if_hwaddr;
-#ifdef DEBUG_ALL
-    unsigned char *hwaddr = (unsigned char *)if_hwaddr.ifr_hwaddr.sa_data;
-#endif    
 	/* Note: PF_INET, SOCK_DGRAM, IPPROTO_UDP would allow SIOCGIFHWADDR to
 	   work as non-root, but we need SOCK_PACKET to specify the Ethernet
 	   destination address. */
@@ -91,22 +88,12 @@ int send_wol(const struct cfgData *data, char *ifname)
     }
     memcpy(outpack+6, if_hwaddr.ifr_hwaddr.sa_data, 6);
 
-    debug_printf("The hardware address (SIOCGIFHWADDR) of %s is type %d  "
-            "%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x.\n", ifname,
-            if_hwaddr.ifr_hwaddr.sa_family, hwaddr[0], hwaddr[1],
-            hwaddr[2], hwaddr[3], hwaddr[4], hwaddr[5]);
 
     if (wol_passwd_sz > 0) {
         memcpy(outpack+pktsize, wol_passwd, wol_passwd_sz);
         pktsize += wol_passwd_sz;
     }
 
-#ifdef DEBUG_ALL
-        debug_printf("The final packet is: ");
-        for (i = 0; i < pktsize; i++)
-            debug_printf(" %2.2x", outpack[i]);
-        debug_printf(".\n");
-#endif
 
     /* This is necessary for broadcasts to work */
     if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, (char *)&one, sizeof(one)) < 0)
@@ -141,11 +128,5 @@ static int get_fill(unsigned char *pkt, const struct cfgData *data)
 		memcpy(pkt+offset, data->ether, 6);
 		offset += 6;
 	}
-#ifdef DEBUG_ALL
-		debug_printf("Packet is ");
-		for (i = 0; i < offset; i++)
-			debug_printf(" %2.2x", pkt[i]);
-		debug_printf(".\n");
-#endif        
 	return offset;
 }

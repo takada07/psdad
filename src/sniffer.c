@@ -84,29 +84,38 @@ int foundcount = 0;
 
 void forward_packet(int size_ip, struct cfgData *configdata, int packet_length, const u_char *packet)
 {
-    u_char *forwardpacket = (u_char *)malloc(packet_length);
-    memcpy(forwardpacket,packet,packet_length);
-    struct sniff_ethernet *ethernet = (struct sniff_ethernet *) (forwardpacket);
-    debug_printf("%02x:%02x:%02x:%02x:%02x:%02x\n", ethernet->ether_dhost[0],ethernet->ether_dhost[1],ethernet->ether_dhost[2],ethernet->ether_dhost[3],ethernet->ether_dhost[4],ethernet->ether_dhost[5]);
-    debug_printf("%02x:%02x:%02x:%02x:%02x:%02x\n", configdata->ether[0], configdata->ether[1], configdata->ether[2], configdata->ether[3], configdata->ether[4], configdata->ether[5]);
-    memcpy(ethernet->ether_dhost,configdata->ether,ETHER_ADDR_LEN);
-    send_wol(configdata,dev);
-    configdata->forwardpacket=forwardpacket;
-    configdata->fwpacketlen=packet_length;
+//    u_char *forwardpacket = (u_char *)malloc(packet_length);
+//    memcpy(forwardpacket,packet,packet_length);
+//    struct sniff_ethernet *ethernet = (struct sniff_ethernet *) (forwardpacket);
+//    memcpy(ethernet->ether_dhost,configdata->ether,ETHER_ADDR_LEN);
+    pthread_mutex_lock(&configdata->accessmutex);
     ifdown(dev,configdata);
+    send_wol(configdata,dev);
+    configdata->status=tGoingUp;
+//    configdata->forwardpacket=forwardpacket;
+//    configdata->fwpacketlen=packet_length;
+    pthread_mutex_unlock(&configdata->accessmutex);
 }
 
-void inject_packet(struct cfgData *data)
+int inject_packet(struct cfgData *data)
 {
+    debug_printf("inject_packet\n");
     if(data->forwardpacket != NULL)
     {
         if (pcap_inject(handle,data->forwardpacket,data->fwpacketlen)==-1) 
         {
+            debug_printf("can not inject packet\n");
             pcap_perror(handle,0);
+            return 1;
         }
+        debug_printf("injecting packet\n")
         data->fwpacketlen=0;
         free(data->forwardpacket);
+        data->forwardpacket=NULL;
+        return 0;
     }
+    debug_printf("inject packet is NULL\n");
+    return 1;
 }
 
 void process_tcppacket(int size_ip, struct cfgData *configdata,int packet_length, const u_char *packet)
@@ -147,14 +156,10 @@ void got_packet(u_char *args, const struct pcap_pkthdr *hdr, const u_char *packe
     configdata = get_cfg(ip->ip_dst);
     if (configdata == NULL)
     {
-        #ifdef DEBUG_ALL
-            char strip[20];
-            inet_ntop(AF_INET,(void *)&ip->ip_dst, strip, INET_ADDRSTRLEN);
-            debug_printf("DSTIP=%s\n",strip);
-        #endif
         return;
     }
-    if (configdata->status==0)
+    debug_printf("Listened ip\n");
+    if (configdata->status!=tDown)
         return;
 	switch(ip->ip_p) {
 		case IPPROTO_TCP:

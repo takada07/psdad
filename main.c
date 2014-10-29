@@ -13,7 +13,7 @@ Part of psdad project distributed under MIT Licence (see LICENSE.txt)
 #include "err.h"
 #include "config.h"
 #include "sniffer.h"
-
+#include "pingserver.h"
 
 int main(int argc, char **argv)
 {
@@ -34,6 +34,11 @@ int main(int argc, char **argv)
         return err;
     }
     err = set_ifaces(dev);
+    if (err != ERR_OK)
+    {
+        printErr(err);
+    }
+    err = init_server(dev);
     if (err != ERR_OK)
     {
         printErr(err);

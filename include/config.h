@@ -11,6 +11,16 @@ Part of psdad project distributed under MIT Licence (see LICENSE.txt)
 
 #include <netinet/in.h>
 #include <net/ethernet.h>
+#include <pthread.h>
+
+typedef enum
+{
+    tUnknown=0,
+    tGoingUp,
+    tUp,
+    tGoingDown,
+    tDown,
+}ipstatus;
 
 struct cfgData {
     char section[30];
@@ -21,12 +31,20 @@ struct cfgData {
     size_t tcpportarraylen;
     unsigned int *udpportarray;
     size_t udpportarraylen;
-    char status;
+    ipstatus status;
     int *sockets;
     int *acceptsockets;
     u_char *forwardpacket;
     int fwpacketlen;
+    pthread_mutex_t accessmutex;
 };
+
+struct hostData
+{
+    struct cfgData data;
+    struct hostData *next;
+};
+extern struct hostData *hostBuffer;
 
 int read_config(char *cfgName);
 struct cfgData *get_cfg(struct in_addr ipaddr);
@@ -34,5 +52,6 @@ void destroy_config();
 int set_ifaces(const char *dev);
 int ifdown(const char *dev, struct cfgData *data);
 int ifup(const char *dev, struct cfgData *data);
+size_t get_configsize();
 
 #endif

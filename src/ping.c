@@ -84,14 +84,19 @@ int ping(const struct in_addr *dest_ip)
         return 1;
     }
     debug_printf("Start ping loop\n");
-    for (loop=0;loop < 10; loop++)
+    for (loop=0;loop < 30; loop++)
     {
 
         unsigned int len=sizeof(r_addr);
 
         if ( recvfrom(sd, &pckt, sizeof(pckt), 0, (struct sockaddr*)&r_addr, &len) > 0 )
         {
-            return 0;
+            struct sockaddr_in *addrin = (struct sockaddr_in *)&r_addr;
+            if (addrin->sin_addr.s_addr == dest_ip->s_addr)
+            {
+                debug_printf("ping recv\n");
+                return 0;
+            }
         }
 
         bzero(&pckt, sizeof(pckt));
@@ -104,10 +109,9 @@ int ping(const struct in_addr *dest_ip)
         pckt.hdr.checksum = checksum(&pckt, sizeof(pckt));
         if ( sendto(sd, &pckt, sizeof(pckt), 0, (struct sockaddr*)addr, sizeof(*addr)) <= 0 )
             perror("sendto");
-
         usleep(300000);
-
     }
 
     return 1;
 }
+

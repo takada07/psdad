@@ -19,7 +19,9 @@ Part of psdad project distributed under MIT Licence (see LICENSE.txt)
 
 #define IP_HL(ip)               (((ip)->ip_vhl) & 0x0f)
 #define IP_V(ip)                (((ip)->ip_vhl) >> 4)
-
+#define SERVER_PORT 2020
+#define WAKEUP_MESSAGE          "Here comes the magic"
+#define SUSPEND_MESSAGE         "Node suspending"
 #ifdef DEBUG_ALL
     #define debug_printf(...) fprintf( stderr, __VA_ARGS__ ); 
 #else
