@@ -8,6 +8,7 @@
 #include "ping.h"
 #include "sniffer.h"
 #include "defines.h"
+#include "err.h"
 
 int server_running;
 pthread_t *ping_threads;
@@ -49,7 +50,7 @@ void *ping_thread(void *arg)
             if (ping(&data->ip) == 0)
             {
                 pthread_mutex_lock(&data->accessmutex);
-                inject_packet(data);
+//                inject_packet(data);
                 data->status=tUp;
                 pthread_mutex_unlock(&data->accessmutex);
             }
@@ -98,8 +99,7 @@ int init_server(char *pdev)
     err = pthread_create(&serverthread, NULL, &server_thread, NULL);
     if (err != 0)
     {
-        debug_printf("\ncan't create thread :[%s]", strerror(err));
-        return 1;
+        return ERR_THREAD_CREATE;
     }
     return 0;
 }

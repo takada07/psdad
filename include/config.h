@@ -34,8 +34,8 @@ struct cfgData {
     ipstatus status;
     int *sockets;
     int *acceptsockets;
-    u_char *forwardpacket;
-    int fwpacketlen;
+    //u_char *forwardpacket;
+    //int fwpacketlen;
     pthread_mutex_t accessmutex;
 };
 
@@ -53,5 +53,5 @@ int set_ifaces(const char *dev);
 int ifdown(const char *dev, struct cfgData *data);
 int ifup(const char *dev, struct cfgData *data);
 size_t get_configsize();
-
+char *get_filters();
 #endif

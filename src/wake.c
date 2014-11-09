@@ -48,16 +48,16 @@
 
 #include "config.h"
 #include "defines.h"
-
-u_char outpack[1000];
-u_char wol_passwd[6];
-int wol_passwd_sz = 0;
+#include "err.h"
+//u_char wol_passwd[6];
+//int wol_passwd_sz = 0;
 
 static int get_fill(unsigned char *pkt, const struct cfgData *data);
 
 int send_wol(const struct cfgData *data, char *ifname)
 {
-	struct sockaddr whereto;	/* who to wake up */
+    u_char outpack[1000];
+    struct sockaddr whereto;	/* who to wake up */
 	int one = 1;				/* True, for socket options. */
 	int s;						/* Raw socket */
 	int i, pktsize;    
@@ -69,45 +69,37 @@ int send_wol(const struct cfgData *data, char *ifname)
 	   destination address. */
 	if ((s = socket(AF_INET, SOCK_PACKET, SOCK_PACKET)) < 0) {
 		if (errno == EPERM)
-			fprintf(stderr, "ether-wake must run as root\n");
+            return ERR_PERMISION;
 		else
-			perror("ether-wake: socket");
+            return ERR_SOCKET_INIT_FAIL;
 	}
 	/* Don't revert if debugging allows a normal user to get the raw socket. */
 	if (setuid(getuid()) != 0)
     {
-        fprintf(stderr,"Can not set UID\n");
+        return ERR_UID;
     }
 
 	pktsize = get_fill(outpack, data);
     strcpy(if_hwaddr.ifr_name, ifname);
     if (ioctl(s, SIOCGIFHWADDR, &if_hwaddr) < 0) {
-        fprintf(stderr, "SIOCGIFHWADDR on %s failed: %s\n", ifname,
-                strerror(errno));
-        return 1;
+        return ERR_SIOCGIFHWADDR;
     }
     memcpy(outpack+6, if_hwaddr.ifr_hwaddr.sa_data, 6);
 
 
-    if (wol_passwd_sz > 0) {
-        memcpy(outpack+pktsize, wol_passwd, wol_passwd_sz);
-        pktsize += wol_passwd_sz;
-    }
-
-
     /* This is necessary for broadcasts to work */
     if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, (char *)&one, sizeof(one)) < 0)
-        perror("setsockopt: SO_BROADCAST");
+        return ERR_SO_BROADCAST;
 
     whereto.sa_family = 0;
     strcpy(whereto.sa_data, ifname);
 
     if ((i = sendto(s, outpack, pktsize, 0, &whereto, sizeof(whereto))) < 0)
-        perror("sendto");
+        return ERR_SENDTO;
     else 
         debug_printf("Sendto worked ! %d.\n", i);
     close(s); 
-    return 0;
+    return ERR_OK;
 
 }
 

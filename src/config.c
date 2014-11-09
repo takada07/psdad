@@ -23,7 +23,7 @@ Part of psdad project distributed under MIT Licence (see LICENSE.txt)
 
 struct hostData *hostBuffer;
 struct hostData *hostBufferLast;
-
+char filters[1000];
 size_t get_configsize()
 {
     size_t retval=0;
@@ -48,8 +48,8 @@ struct cfgData *set_section(const char *section)
     }
     tmp = (struct hostData *)malloc(sizeof(struct hostData));
     strcpy(tmp->data.section,section);
-    tmp->data.forwardpacket=NULL;
-    tmp->data.fwpacketlen=0;
+//    tmp->data.forwardpacket=NULL;
+//    tmp->data.fwpacketlen=0;
     tmp->data.status=tUnknown;
     pthread_mutex_init(&tmp->data.accessmutex,NULL);
     tmp->next=NULL;
@@ -219,8 +219,8 @@ void destroy_config()
             free(tmp->data.tcpportarray);
         if (tmp->data.udpportarray != NULL)
             free(tmp->data.udpportarray);
-        if (tmp->data.forwardpacket != NULL)
-            free(tmp->data.forwardpacket);
+//        if (tmp->data.forwardpacket != NULL)
+//            free(tmp->data.forwardpacket);
         free (tmp);
         tmp=tmp2;
     }
@@ -244,3 +244,46 @@ int ifup(const char *dev, struct cfgData *data)
     return (system(cmd));
 }
 
+char *get_filters()
+{
+    if (hostBuffer != NULL)
+    {
+        struct hostData *tmp;
+        tmp=hostBuffer;
+        while (tmp != NULL)
+        {
+            char tmpstr[100];
+            char strip[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET,(void *)&tmp->data.ip,strip,INET_ADDRSTRLEN);
+            sprintf(tmpstr,"(ip.dst==%s",strip);
+            int i;
+            if (tmp->data.tcpportarraylen != 0)
+            {
+                strcat(tmpstr,"&&(");
+                for (i=0;i<tmp->data.tcpportarraylen;i++)
+                {
+                    char strport[30];
+                    sprintf(strport,"tcp port %i",tmp->data.tcpportarray[i]);
+                    strcat(tmpstr,strport);
+                    if (i != tmp->data.tcpportarraylen -1)
+                    {
+                        strcat(tmpstr,"||");
+                    }
+                    else
+                    {
+                        strcat(tmpstr,")");
+                    }
+                }
+                strcat (filters,tmpstr);
+            }
+            if (tmp->next != NULL)
+                strcat (filters,")&&(");
+            else
+                strcat (filters,")");
+            tmp=tmp->next;
+        }
+    }
+    else
+        strcpy(filters,"");
+    return filters;
+}

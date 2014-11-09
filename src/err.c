@@ -9,6 +9,7 @@ Part of psdad project distributed under MIT Licence (see LICENSE.txt)
 
 #include "err.h"
 #include <stdio.h>
+#include <string.h>
 
 char errMsg[ERR_COUNT][MAX_ERR_STR_SIZE] = 
 {
@@ -21,13 +22,23 @@ char errMsg[ERR_COUNT][MAX_ERR_STR_SIZE] =
     "Couldn't open device",
     "Device is not an Ethernet",
     "Couldn't install filter",
+    "Can not init socket",
+    "Can not create thread",
+    "Can not set TTL option",
+    "Request for non locking IO failed",
+    "Permission denied",
+    "Can not set UID",
+    "SIOCGIFHWADDR",
+    "Can not set SO_BROADCAST option",
+    "Sendto failed",
+    "Can not receive PING response",
 };
 
 int getErrString(unsigned int err, char *errStr)
 {
     if (err < ERR_COUNT)
     {
-        errStr = &errMsg[err][0];
+        strcpy(errStr,errMsg[err]);
         return ERR_OK;
     }
     return ERR_MSG_STR_NOT_FOUND;
@@ -35,8 +46,8 @@ int getErrString(unsigned int err, char *errStr)
 
 int printErr(unsigned int err)
 {
-    char *errStr=NULL;
-    if (getErrString(err,errStr)==ERR_OK && errStr != NULL)
+    char errStr[MAX_ERR_STR_SIZE];
+    if (getErrString(err,errStr)==ERR_OK)
     {
         printf("%s\n",errStr);
         return ERR_OK;

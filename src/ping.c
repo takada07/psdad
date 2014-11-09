@@ -17,7 +17,10 @@ Part of psdad project distributed under MIT Licence (see LICENSE.txt)
 #include <strings.h>
 
 #include "defines.h"
+#include "err.h"
+
 #define PACKETSIZE  64
+
 struct packet
 {
     struct icmphdr hdr;
@@ -69,19 +72,16 @@ int ping(const struct in_addr *dest_ip)
     sd = socket(AF_INET, SOCK_RAW, proto->p_proto);
     if ( sd < 0 )
     {
-        perror("socket");
-        return 1;
+        return ERR_SOCKET_INIT_FAIL;
     }
     debug_printf("raw socket\n");
     if ( setsockopt(sd, SOL_IP, IP_TTL, &val, sizeof(val)) != 0)
     {
-        perror("Set TTL option");
-        return 1;
+        return ERR_OPT_TTL;
     }
     if ( fcntl(sd, F_SETFL, O_NONBLOCK) != 0 )
     {
-        perror("Request nonblocking I/O");
-        return 1;
+        return ERR_NONBLOCKING_IO;
     }
     debug_printf("Start ping loop\n");
     for (loop=0;loop < 30; loop++)
@@ -95,7 +95,7 @@ int ping(const struct in_addr *dest_ip)
             if (addrin->sin_addr.s_addr == dest_ip->s_addr)
             {
                 debug_printf("ping recv\n");
-                return 0;
+                return ERR_OK;
             }
         }
 
@@ -108,10 +108,10 @@ int ping(const struct in_addr *dest_ip)
         pckt.hdr.un.echo.sequence = cnt++;
         pckt.hdr.checksum = checksum(&pckt, sizeof(pckt));
         if ( sendto(sd, &pckt, sizeof(pckt), 0, (struct sockaddr*)addr, sizeof(*addr)) <= 0 )
-            perror("sendto");
+            return ERR_SENDTO;
         usleep(300000);
     }
 
-    return 1;
+    return ERR_PING;
 }
 

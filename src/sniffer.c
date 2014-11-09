@@ -84,20 +84,14 @@ int foundcount = 0;
 
 void forward_packet(int size_ip, struct cfgData *configdata, int packet_length, const u_char *packet)
 {
-//    u_char *forwardpacket = (u_char *)malloc(packet_length);
-//    memcpy(forwardpacket,packet,packet_length);
-//    struct sniff_ethernet *ethernet = (struct sniff_ethernet *) (forwardpacket);
-//    memcpy(ethernet->ether_dhost,configdata->ether,ETHER_ADDR_LEN);
     pthread_mutex_lock(&configdata->accessmutex);
     ifdown(dev,configdata);
     send_wol(configdata,dev);
     configdata->status=tGoingUp;
-//    configdata->forwardpacket=forwardpacket;
-//    configdata->fwpacketlen=packet_length;
     pthread_mutex_unlock(&configdata->accessmutex);
 }
 
-int inject_packet(struct cfgData *data)
+/*int inject_packet(struct cfgData *data)
 {
     debug_printf("inject_packet\n");
     if(data->forwardpacket != NULL)
@@ -116,7 +110,7 @@ int inject_packet(struct cfgData *data)
     }
     debug_printf("inject packet is NULL\n");
     return 1;
-}
+}*/
 
 void process_tcppacket(int size_ip, struct cfgData *configdata,int packet_length, const u_char *packet)
 {
@@ -149,7 +143,7 @@ void got_packet(u_char *args, const struct pcap_pkthdr *hdr, const u_char *packe
 	ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
 	size_ip = IP_HL(ip)*4;
 	if (size_ip < 20) {
-		printf("   * Invalid IP header length: %u bytes\n", size_ip);
+		debug_printf("   * Invalid IP header length: %u bytes\n", size_ip);
 		return;
 	}
     struct cfgData *configdata;
@@ -167,7 +161,7 @@ void got_packet(u_char *args, const struct pcap_pkthdr *hdr, const u_char *packe
             process_tcppacket(size_ip,configdata,hdr->len,packet);
 			break;;
 		case IPPROTO_UDP:
-			printf("   Protocol: UDP\n");
+			debug_printf("   Protocol: UDP\n");
 			break;
 		default:
 			debug_printf("   Not supported protocol\n");
@@ -178,22 +172,28 @@ void got_packet(u_char *args, const struct pcap_pkthdr *hdr, const u_char *packe
 
 int init_sniffer(char *conf_dev)
 {
-	char filter_exp[] = "ip";		/* filter expression [3] */
+	char *filter_exp;		/* filter expression [3] */
 	bpf_u_int32 mask;			/* subnet mask */
 	bpf_u_int32 net;			/* ip */
 
 	/* check for capture device name on command-line */
 	if (conf_dev != NULL) 
     {
-        dev = conf_dev;
+        dev =(char *)malloc(strlen(conf_dev)+1);
+        strcpy(dev,conf_dev);
 	}
 	else 
     {
 		/* find a capture device if not specified on command-line */
-		dev = pcap_lookupdev(errbuf);
-		if (dev == NULL) {
+		char* tmpdev = pcap_lookupdev(errbuf);
+		if (tmpdev == NULL) {
             return (ERR_DEFAULT_DEV_NOT_FOUND);
 		}
+        else
+        {
+            dev = (char *)malloc(strlen(tmpdev)+1);
+            strcpy(dev,tmpdev);
+        }
 	}
     debug_printf("%s\n",dev);
 	/* get network number and mask associated with capture device */
@@ -204,6 +204,18 @@ int init_sniffer(char *conf_dev)
 	}
 
 	/* print capture info */
+    char *tmp_filter_exp=get_filters();
+    if (strcmp(tmp_filter_exp,"")==0)
+    {
+        filter_exp=malloc(3);
+        strcpy(filter_exp,"ip");
+    }
+    else
+    {
+        filter_exp=malloc(strlen(tmp_filter_exp)+1);
+        strcpy(filter_exp,tmp_filter_exp);
+    }
+    
     #ifdef DEBUG_ALL
 	    debug_printf("Device: %s\n", dev);
     	debug_printf("Filter expression: %s\n", filter_exp);
@@ -243,9 +255,9 @@ int start_loop()
 	/* cleanup */
 	pcap_freecode(&fp);
 	pcap_close(handle);
-
+    free(dev);
 	printf("\nCapture complete.\n");
 
-return 0;
+    return 0;
     
 }

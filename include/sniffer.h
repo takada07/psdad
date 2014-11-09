@@ -13,6 +13,6 @@ Part of psdad project distributed under MIT Licence (see LICENSE.txt)
 
 int init_sniffer(char *conf_dev);
 int start_loop();
-int inject_packet(struct cfgData *data);
+//int inject_packet(struct cfgData *data);
 
 #endif
