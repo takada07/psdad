@@ -68,7 +68,7 @@ int ping(const struct in_addr *dest_ip)
     addr_ping.sin_port = 0;
     addr_ping.sin_addr.s_addr = dest_ip->s_addr;
     pid = getpid();
-    debug_printf("ping started\n");
+    debug_printf("ping started %x\n", dest_ip->s_addr);
     sd = socket(AF_INET, SOCK_RAW, proto->p_proto);
     if ( sd < 0 )
     {
@@ -84,7 +84,7 @@ int ping(const struct in_addr *dest_ip)
         return ERR_NONBLOCKING_IO;
     }
     debug_printf("Start ping loop\n");
-    for (loop=0;loop < 30; loop++)
+    for (loop=0;loop < 10; loop++)
     {
 
         unsigned int len=sizeof(r_addr);
@@ -94,7 +94,7 @@ int ping(const struct in_addr *dest_ip)
             struct sockaddr_in *addrin = (struct sockaddr_in *)&r_addr;
             if (addrin->sin_addr.s_addr == dest_ip->s_addr)
             {
-                debug_printf("ping recv\n");
+                debug_printf("ping recv %x\n",dest_ip->s_addr);
                 return ERR_OK;
             }
         }

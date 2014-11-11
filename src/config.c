@@ -255,11 +255,11 @@ char *get_filters()
             char tmpstr[100];
             char strip[INET_ADDRSTRLEN];
             inet_ntop(AF_INET,(void *)&tmp->data.ip,strip,INET_ADDRSTRLEN);
-            sprintf(tmpstr,"(ip.dst==%s",strip);
+            sprintf(tmpstr,"dst net %s",strip);
             int i;
             if (tmp->data.tcpportarraylen != 0)
             {
-                strcat(tmpstr,"&&(");
+                strcat(tmpstr," && (");
                 for (i=0;i<tmp->data.tcpportarraylen;i++)
                 {
                     char strport[30];
@@ -277,9 +277,7 @@ char *get_filters()
                 strcat (filters,tmpstr);
             }
             if (tmp->next != NULL)
-                strcat (filters,")&&(");
-            else
-                strcat (filters,")");
+                strcat (filters,"||");
             tmp=tmp->next;
         }
     }

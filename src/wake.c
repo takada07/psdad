@@ -54,6 +54,57 @@
 
 static int get_fill(unsigned char *pkt, const struct cfgData *data);
 
+int send_arping(const struct cfgData *data, char *ifname)
+{
+/*    u_char outpack[1000];
+    struct sockaddr whereto;
+    int sd;
+	int one = 1;			
+    if ((sd == socket(AF_INET, SOCK_PACKET, SOCK_PACKET)) < 0) 
+    {
+        if (errno == EPERM)
+            return ERR_PERMISION;
+        else
+            return ERR_SOCKET_INIT_FAIL;
+    }
+	if (setuid(getuid()) != 0)
+    {
+        return ERR_UID;
+    }
+    struct ifreq if_hwaddr;
+    //broadcasts destination
+    unsigned long destaddr = 0xFFFFFFFFFFFF;
+    memcpy(outpack,&destaddr,6);
+    strcpy(if_hwaddr.ifr_name, ifname);
+    if (ioctl(sd, SIOCGIFHWADDR, &if_hwaddr) < 0) {
+        return ERR_SIOCGIFHWADDR;
+    }
+    memcpy(outpack+6, if_hwaddr.ifr_hwaddr.sa_data, 6);
+    //Add ARP protocol
+    unsigned int protocol = 0x0806;
+    memcpy(outpack+12, &protocol,2);
+    unsigned int hwtype =0x0001;    //ETHERNET
+    unsigned int protype = 0x0800;  //IP
+    unsigned int hwsize = 0x06; 
+    unsigned int prosize = 0x04;
+    unsigned int opcode = 0x0001;
+    memcpy(outpack+14, 0x0001080006040001,8);
+    memcpy(outpack+22, if_hwaddr.ifr_hwaddr.sa_data, 6);
+    if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, (char *)&one, sizeof(one)) < 0)
+        return ERR_SO_BROADCAST;
+    
+    whereto.sa_family = 0;
+    strcpy(whereto.sa_data, ifname);
+
+    if ((i = sendto(s, outpack, pktsize, 0, &whereto, sizeof(whereto))) < 0)
+        return ERR_SENDTO;
+    else 
+        debug_printf("Sendto worked ! %d.\n", i);
+    close(s);*/ 
+    return ERR_OK;
+
+}
+
 int send_wol(const struct cfgData *data, char *ifname)
 {
     u_char outpack[1000];
@@ -67,7 +118,8 @@ int send_wol(const struct cfgData *data, char *ifname)
 	/* Note: PF_INET, SOCK_DGRAM, IPPROTO_UDP would allow SIOCGIFHWADDR to
 	   work as non-root, but we need SOCK_PACKET to specify the Ethernet
 	   destination address. */
-	if ((s = socket(AF_INET, SOCK_PACKET, SOCK_PACKET)) < 0) {
+	if ((s = socket(AF_INET, SOCK_PACKET, SOCK_PACKET)) < 0) 
+    {
 		if (errno == EPERM)
             return ERR_PERMISION;
 		else

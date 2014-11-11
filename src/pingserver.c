@@ -78,7 +78,7 @@ void *server_thread(void *arg)
         struct hostData *tmp = hostBuffer;        
         for(i=0;i<get_configsize();i++)
         {
-            debug_printf("New ping cycle\n");
+            debug_printf("New ping cycle %i\n",get_configsize());
             pthread_create(&ping_threads[i],NULL,ping_thread,(void *)&tmp->data);
             pthread_join(ping_threads[i], NULL);
             tmp = tmp->next;
