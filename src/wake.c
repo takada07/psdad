@@ -56,16 +56,16 @@ static int get_fill(unsigned char *pkt, const struct cfgData *data);
 
 int send_arping(const struct cfgData *data, char *ifname)
 {
-/*    u_char outpack[1000];
+    u_char outpack[1000];
     struct sockaddr whereto;
     int sd;
-	int one = 1;			
+	int one = 1;
+    int offset = 0;
     if ((sd == socket(AF_INET, SOCK_PACKET, SOCK_PACKET)) < 0) 
     {
         if (errno == EPERM)
             return ERR_PERMISION;
-        else
-            return ERR_SOCKET_INIT_FAIL;
+        return ERR_SOCKET_INIT_FAIL;
     }
 	if (setuid(getuid()) != 0)
     {
@@ -75,32 +75,41 @@ int send_arping(const struct cfgData *data, char *ifname)
     //broadcasts destination
     unsigned long destaddr = 0xFFFFFFFFFFFF;
     memcpy(outpack,&destaddr,6);
+    offset += 6;
     strcpy(if_hwaddr.ifr_name, ifname);
     if (ioctl(sd, SIOCGIFHWADDR, &if_hwaddr) < 0) {
         return ERR_SIOCGIFHWADDR;
     }
-    memcpy(outpack+6, if_hwaddr.ifr_hwaddr.sa_data, 6);
+    memcpy(outpack+offset, if_hwaddr.ifr_hwaddr.sa_data, 6);
+    offset += 6;
     //Add ARP protocol
     unsigned int protocol = 0x0806;
-    memcpy(outpack+12, &protocol,2);
+    memcpy(outpack+offset, &protocol,2);
+    offset += 2;
     unsigned int hwtype =0x0001;    //ETHERNET
     unsigned int protype = 0x0800;  //IP
-    unsigned int hwsize = 0x06; 
-    unsigned int prosize = 0x04;
     unsigned int opcode = 0x0001;
-    memcpy(outpack+14, 0x0001080006040001,8);
-    memcpy(outpack+22, if_hwaddr.ifr_hwaddr.sa_data, 6);
-    if (setsockopt(s, SOL_SOCKET, SO_BROADCAST, (char *)&one, sizeof(one)) < 0)
+    memcpy(outpack+offset, &hwtype,2);
+    offset += 2;
+    memcpy(outpack+offset, &protype, 2);
+    offset += 2;
+    outpack[offset]=0x06;
+    outpack[offset+1]=0x04;
+    offset += 2;
+    memcpy(outpack+offset,&opcode,2);
+    offset += 2;
+    memcpy(outpack+offset, if_hwaddr.ifr_hwaddr.sa_data, 6);
+    if (setsockopt(sd, SOL_SOCKET, SO_BROADCAST, (char *)&one, sizeof(one)) < 0)
         return ERR_SO_BROADCAST;
-    
+    offset += 6; 
     whereto.sa_family = 0;
     strcpy(whereto.sa_data, ifname);
-
-    if ((i = sendto(s, outpack, pktsize, 0, &whereto, sizeof(whereto))) < 0)
+    int i;
+    if ((i = sendto(sd, outpack, offset, 0, &whereto, sizeof(whereto))) < 0)
         return ERR_SENDTO;
     else 
         debug_printf("Sendto worked ! %d.\n", i);
-    close(s);*/ 
+    close(sd);
     return ERR_OK;
 
 }
@@ -150,8 +159,9 @@ int send_wol(const struct cfgData *data, char *ifname)
         return ERR_SENDTO;
     else 
         debug_printf("Sendto worked ! %d.\n", i);
-    close(s); 
-    return ERR_OK;
+    close(s);
+    sleep(3);
+    return (send_arping(data,ifname));
 
 }
 
